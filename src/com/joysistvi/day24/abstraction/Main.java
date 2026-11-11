@@ -8,14 +8,13 @@ public class Main {
         System.out.println("=== Ballpen ===");
         System.out.println(ballpen);
         ballpen.write();
-z`
+
         System.out.println();
 
         System.out.println("=== Marker ===");
         System.out.println(marker);
         marker.write();
 
-        // Stretch Goal: GelPen extends Ballpen, which extends Pen
         Gelpen gelPen = new Gelpen("Zebra", "Blue", 18.5, 0.5, true);
 
         System.out.println();
@@ -23,7 +22,6 @@ z`
         System.out.println(gelPen);
         gelPen.write();
 
-        // Check inherited members
         System.out.println("Point Size from Ballpen: " + gelPen.getPointSize());
         System.out.println("Brand from Pen: " + gelPen.getBrand());
     }
