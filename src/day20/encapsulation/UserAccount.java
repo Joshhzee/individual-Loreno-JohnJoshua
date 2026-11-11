@@ -35,7 +35,7 @@ public class UserAccount {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public void setAddress(String address) { this.address = address; }
 
-    // Email validation
+    // Email
     public void setEmail(String email) {
         if (email != null && email.contains("@") && email.contains(".")) {
             this.email = email;
