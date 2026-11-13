@@ -1,69 +1,73 @@
-package com.joysistvi.day16.methods.sample;
+package com.joysistvi.day16.methods;
 
 import java.util.Scanner;
 
 public class loadRegistration {
-    static Scanner input = new Scanner(System.in);
-    static boolean running = true;
-    static int loadBalance = 200;
-    static String activePromo = "None";
-    static int daysDuration = 0;
+
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final String USSD_CODE = "*143#";
+
+    private static boolean running = true;
+    private static int balance = 200;
+    private static String currentPromo = "None";
+    private static int promoDays = 0;
+
+    // Holds the details of a single promo
+    record Promo(String name, int gb, String extra, String durationText, int price, int days) {}
+
+    // Promo catalogs
+    private static final Promo[] GO_PLUS = {
+            new Promo("Go+99", 8, " with free 8GB", "", 99, 7),
+            new Promo("Go+129", 11, " with free 8GB", "", 129, 14),
+            new Promo("Go+149", 13, " with free 8GB", "", 149, 14)
+    };
+
+    private static final Promo[] GO = {
+            new Promo("Go50", 3, "", "", 50, 3),
+            new Promo("Go90", 8, "", "", 90, 5),
+            new Promo("Go120", 12, "", "", 120, 7)
+    };
+
+    private static final Promo[] GO_EXTRA = {
+            new Promo("GoEXTRA99", 8, " and unli all-net calls and texts", "", 99, 3),
+            new Promo("GoEXTRA129", 10, " and unli all-net calls and texts", "", 129, 7),
+            new Promo("GoEXTRA149", 15, " and unli all-net calls and texts", "", 149, 14)
+    };
+
+    private static final Promo[] UNLI_5G = {
+            new Promo("UNLI 5G 99", 100, "", "for 1 day", 99, 1),
+            new Promo("UNLI 5G 149", 100, "", "for 3 day", 149, 3),
+            new Promo("UNLI 5G 199", 100, "", "for 7 day", 199, 7)
+    };
+
+    private static final Promo[] ALLNET = {
+            new Promo("ALLNET99", 1, "and unli calls and texts to all networks", "for 3 days", 99, 3),
+            new Promo("ALLNET149", 2, "and unli calls and texts to all networks", "for 7 days", 149, 7),
+            new Promo("ALLNET199", 3, "and unli calls and texts to all networks", "for 14 days", 199, 14)
+    };
 
     public static void main(String[] args) {
-
-        dialUSSD();
-
+        promptUssd();
     }
 
-    public static void dialUSSD() {
 
-        String ussd;
-
+    public static void promptUssd() {
+        String code;
         do {
             System.out.println("Dial *143# to access Globe Services");
             System.out.print("Enter USSD Code: ");
-            ussd = input.nextLine();
+            code = scanner.nextLine();
 
-            if (!ussd.equals("*143#")) {
+            if (!code.equals(USSD_CODE)) {
                 System.out.println("Incorrect USSD Code, please try again\n");
             }
+        } while (!code.equals(USSD_CODE));
 
-        } while (!ussd.equals("*143#"));
-        mainMenu();
-
+        showMainMenu();
     }
 
-    public static void checkLoadBalance() {
-        System.out.println("\nYour current balance is: P" + loadBalance +
-                "\n[1] Return to Main Menu \n" +
-                "[2] Cancel\n");
-        int choice = getInput("Enter your choice: ");
 
-        switch (choice) {
-            case 1 -> {
-                return;
-            }
-            case 2 -> exitMethod();
-            default -> System.out.println("Invalid input, please try again");
-        }
-
-    }
-
-    public static void checkCurrentPromo() {
-
-        System.out.println("\n*** Current Promo ***");
-
-        if (activePromo.equals("None")) {
-            System.out.println("No promo currently registered.");
-        } else {
-            System.out.println("Registered Promo: " + activePromo);
-            System.out.println("Promo duration: " + daysDuration);
-        }
-
-        System.out.println("Regular Load Balance: P" + loadBalance);
-    }
-
-    public static void mainMenu() {
+    public static void showMainMenu() {
         while (running) {
             System.out.print("\n* Load Registration * \n" +
                     "[1] Go+ \n" +
@@ -74,240 +78,162 @@ public class loadRegistration {
                     "[6] Check Load Balance \n" +
                     "[7] Check Current Promo \n" +
                     "[0] Cancel \n");
-            int promo = getInput("Enter a choice: ");
+            int selected = readNumber("Enter a choice: ");
 
-            switch (promo) {
-                case 1 -> goPlusPromo();
-                case 2 -> goPromo();
-                case 3 -> goExtraPromo();
-                case 4 -> unli5GPromo();
-                case 5 -> allNetPromo();
-                case 6 -> checkLoadBalance();
-                case 7 -> checkCurrentPromo();
-                case 0 -> exitMethod();
+            switch (selected) {
+                case 1 -> showPromoCategory("\n*** Go+ Promos *** \n", GO_PLUS);
+                case 2 -> showPromoCategory("\n*** Go Promos *** \n", GO);
+                case 3 -> showPromoCategory("\n*** GoEXTRA Promos *** \n", GO_EXTRA);
+                case 4 -> showPromoCategory("\n*** UNLI 5G Promos ***\n", UNLI_5G);
+                case 5 -> showPromoCategory("\n*** ALLNET Promos ***\n", ALLNET);
+                case 6 -> showBalance();
+                case 7 -> showCurrentPromo();
+                case 0 -> confirmExit();
                 default -> System.out.println("Invalid choice. Please try again.");
             }
         }
     }
 
-    public static void goPlusPromo() {
-        while (running) {
-            System.out.print("\n*** Go+ Promos *** \n" +
-                    "[1] Go+99 \n" +
-                    "[2] Go+129 \n" +
-                    "[3] Go+149 \n" +
-                    "[4] Back \n" +
-                    "[0] Cancel \n");
-            int goPlus = getInput("Enter a choice: ");
+    // One reusable menu for every promo category
+    public static void showPromoCategory(String header, Promo[] promos) {
+        int backOption = promos.length + 1;
 
-            switch (goPlus) {
-                case 1 -> promoDetailsMenu("Go+99", 8, " with free 8GB", "", 99, 7);
-                case 2 -> promoDetailsMenu("Go+129", 11, " with free 8GB", "", 129, 14);
-                case 3 -> promoDetailsMenu("Go+149", 13, " with free 8GB", "", 149, 14);
-                case 4 -> {
-                    return;
-                }
-                case 0 -> exitMethod();
-                default -> System.out.println("Invalid choice. Please try again.");
+        while (running) {
+            StringBuilder menu = new StringBuilder(header);
+            for (int i = 0; i < promos.length; i++) {
+                menu.append("[").append(i + 1).append("] ").append(promos[i].name()).append(" \n");
             }
+            menu.append("[").append(backOption).append("] Back \n");
+            menu.append("[0] Cancel \n");
+            System.out.print(menu);
 
-        }
-    }
+            int selected = readNumber("Enter a choice: ");
 
-    public static void goPromo() {
-        while (running) {
-            System.out.print("\n*** Go Promos *** \n" +
-                    "[1] Go50 \n" +
-                    "[2] Go90 \n" +
-                    "[3] Go120 \n" +
-                    "[4] Back \n" +
-                    "[0] Cancel \n");
-            int go = getInput("Enter a choice: ");
-
-            switch (go) {
-                case 1 -> promoDetailsMenu("Go50", 3, "", "", 50, 3);
-                case 2 -> promoDetailsMenu("Go90", 8, "", "", 90, 5);
-                case 3 -> promoDetailsMenu("Go120", 12, "", "", 120, 7);
-                case 4 -> {
-                    return;
-                }
-                case 0 -> exitMethod();
-                default -> System.out.println("Invalid choice. Please try again.");
+            if (selected >= 1 && selected <= promos.length) {
+                showPromoDetails(promos[selected - 1]);
+            } else if (selected == backOption) {
+                return;
+            } else if (selected == 0) {
+                confirmExit();
+            } else {
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }
 
-    public static void goExtraPromo() {
+    public static void showPromoDetails(Promo promo) {
         while (running) {
-            System.out.print("\n*** GoEXTRA Promos *** \n" +
-                    "[1] GoEXTRA99 \n" +
-                    "[2] GoEXTRA129 \n" +
-                    "[3] GoEXTRA149 \n" +
-                    "[4] Back \n" +
-                    "[0] Cancel \n");
-            int goExtra = getInput("Enter a choice: ");
-
-            switch (goExtra) {
-                case 1 -> promoDetailsMenu("GoEXTRA99", 8, " and unli all-net calls and texts", "", 99, 3);
-                case 2 -> promoDetailsMenu("GoEXTRA129", 10, " and unli all-net calls and texts", "", 129, 7);
-                case 3 -> promoDetailsMenu("GoEXTRA149", 15, " and unli all-net calls and texts", "", 149, 14);
-                case 4 -> {
-                    return;
-                }
-                case 0 -> exitMethod();
-                default -> System.out.println("Invalid choice. Please try again.");
-            }
-        }
-    }
-
-    public static void unli5GPromo() {
-        while (running) {
-            System.out.print("\n*** UNLI 5G Promos ***\n" +
-                    "[1] UNLI 5G 99 \n" +
-                    "[2] UNLI 5G 149 \n" +
-                    "[3] UNLI 5G 199 \n" +
-                    "[4] Back \n" +
-                    "[0] Cancel \n");
-            int unli5G = getInput("Enter a choice: ");
-
-            switch (unli5G) {
-
-                case 1 -> promoDetailsMenu("UNLI 5G 99", 100, "", "for 1 day", 99, 1);
-                case 2 -> promoDetailsMenu("UNLI 5G 149", 100, "", "for 3 day", 149, 3);
-                case 3 -> promoDetailsMenu("UNLI 5G 199", 100, "", "for 7 day", 199, 7);
-                case 4 -> {
-                    return;
-                }
-                case 0 -> exitMethod();
-                default -> System.out.println("Invalid choice. Please try again.");
-            }
-        }
-    }
-
-    public static void allNetPromo() {
-        while (running) {
-            System.out.print("\n*** ALLNET Promos ***\n" +
-                    "[1] ALLNET99 \n" +
-                    "[2] ALLNET149 \n" +
-                    "[3] ALLNET199 \n" +
-                    "[4] Back \n" +
-                    "[0] Cancel \n");
-            int allNet = getInput("Enter a choice: ");
-
-            switch (allNet) {
-                case 1 -> promoDetailsMenu("ALLNET99", 1, "and unli calls and texts to all networks", "for 3 days", 99, 3);
-                case 2 ->
-                        promoDetailsMenu("ALLNET149", 2, "and unli calls and texts to all networks", "for 7 days", 149, 7);
-                case 3 ->
-                        promoDetailsMenu("ALLNET199", 3, "and unli calls and texts to all networks", "for 14 days", 199, 14);
-                case 4 -> {
-                    return;
-                }
-                case 0 -> exitMethod();
-                default -> System.out.println("Invalid choice. Please try again.");
-            }
-        }
-    }
-
-    public static void promoDetailsMenu(String promoName, int GB, String free, String daysPromo, int price, int days) {
-        while (running) {
-            System.out.print("\n*** " + promoName + "Promo ***\n" +
-                    "Get " + GB + "GB for all sites" + free + daysPromo +
-                    "\nfor P" + price +
+            System.out.print("\n*** " + promo.name() + "Promo ***\n" +
+                    "Get " + promo.gb() + "GB for all sites" + promo.extra() + promo.durationText() +
+                    "\nfor P" + promo.price() +
                     "\n[1] Subscribe \n" +
                     "[2] Exit \n" +
                     "[3] Back \n" +
                     "[0] Cancel \n");
-            int action = getInput("Enter a choice: ");
+            int selected = readNumber("Enter a choice: ");
 
-            switch (action) {
-
+            switch (selected) {
                 case 1 -> {
-                    if (subscribe(promoName, price, days)) {
-                        actions();
-
-                        System.out.println("Registered Promo: " + activePromo);
-                        System.out.println("Remaining Balance: P" + loadBalance);
-
-                        afterSubscription();
-                        return;
-
+                    if (tryPurchase(promo)) {
+                        printSuccess();
+                        System.out.println("Registered Promo: " + currentPromo);
+                        System.out.println("Remaining Balance: P" + balance);
+                        showNextSteps();
                     } else {
                         System.out.println("Returning to available promos...");
-                        return;
                     }
+                    return;
                 }
-
-                case 2 -> exitMethod();
+                case 2, 0 -> confirmExit();
                 case 3 -> {
                     return;
                 }
-                case 0 -> exitMethod();
                 default -> System.out.println("Invalid choice. Please try again.");
             }
-
         }
     }
 
-    public static void actions() {
+
+    public static void showBalance() {
+        System.out.println("\nYour current balance is: P" + balance +
+                "\n[1] Return to Main Menu \n" +
+                "[2] Cancel\n");
+        int selected = readNumber("Enter your choice: ");
+
+        switch (selected) {
+            case 1 -> { }
+            case 2 -> confirmExit();
+            default -> System.out.println("Invalid input, please try again");
+        }
+    }
+
+    public static void showCurrentPromo() {
+        System.out.println("\n*** Current Promo ***");
+
+        if (currentPromo.equals("None")) {
+            System.out.println("No promo currently registered.");
+        } else {
+            System.out.println("Registered Promo: " + currentPromo);
+            System.out.println("Promo duration: " + promoDays);
+        }
+
+        System.out.println("Regular Load Balance: P" + balance);
+    }
+
+
+    public static boolean tryPurchase(Promo promo) {
+        if (balance < promo.price()) {
+            System.out.println("\nInsufficient Load Balance!");
+            System.out.println("Current Balance: P" + balance);
+            System.out.println("Promo duration: " + promoDays);
+            return false;
+        }
+
+        balance -= promo.price();
+        currentPromo = promo.name();
+        promoDays = promo.days();
+        return true;
+    }
+
+    public static void printSuccess() {
         System.out.println("\n*** Load Registration Successful ***");
         System.out.println("    Thank you for choosing Globe    ");
     }
 
-    public static boolean subscribe(String promoName, int price, int days) {
-        if (loadBalance >= price) {
-            loadBalance -= price;
-            activePromo = promoName;
-            daysDuration = days;
-            return true;
-        } else {
-            System.out.println("\nInsufficient Load Balance!");
-            System.out.println("Current Balance: P" + loadBalance);
-            System.out.println("Promo duration: " + daysDuration);
-            return false;
-        }
-    }
-
-    public static void afterSubscription(){
+    public static void showNextSteps() {
         while (true) {
-
             System.out.println("\nWhat would you like to do next?");
             System.out.println("[1] Return to Promo Menu");
             System.out.println("[2] Exit Program");
 
-            int choice = getInput("Enter your choice: ");
+            int selected = readNumber("Enter your choice: ");
 
-            switch (choice) {
-
-                case 1 -> {
-                    System.out.println("Returning to Promo Menu...");
-                    return;
-                }
-
-                case 2 -> {
-                    running = false;
-                    System.out.println("Exiting the program...");
-                    return;
-                }
-
-                default -> System.out.println("Invalid choice. Please try again.");
+            if (selected == 1) {
+                System.out.println("Returning to Promo Menu...");
+                return;
+            } else if (selected == 2) {
+                running = false;
+                System.out.println("Exiting the program...");
+                return;
+            } else {
+                System.out.println("Invalid choice. Please try again.");
             }
         }
     }
 
-    public static void exitMethod() {
 
+    public static void confirmExit() {
         while (true) {
             System.out.println("Are you sure that you want to exit the program?" +
                     "\n[1] Yes - Exit the program" +
                     "\n[2] No - Continue");
-            int choice = getInput("Enter your choice: ");
+            int selected = readNumber("Enter your choice: ");
 
-            if (choice == 1) {
+            if (selected == 1) {
                 running = false;
                 System.out.println("Exiting the program...");
                 return;
-            } else if (choice == 2) {
+            } else if (selected == 2) {
                 System.out.println("Returning to choices...");
                 return;
             } else {
@@ -316,13 +242,13 @@ public class loadRegistration {
         }
     }
 
-    public static int getInput(String prompt) {
+    public static int readNumber(String message) {
         while (true) {
-            System.out.print(prompt);
-            String inputPrompt = input.nextLine().trim();
+            System.out.print(message);
+            String text = scanner.nextLine().trim();
 
             try {
-                return Integer.parseInt(inputPrompt);
+                return Integer.parseInt(text);
             } catch (Exception e) {
                 System.out.println("Invalid Input. Please enter a number");
             }
