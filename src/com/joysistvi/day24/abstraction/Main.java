@@ -1,28 +1,45 @@
 package com.joysistvi.day24.abstraction;
 
 public class Main {
+
     public static void main(String[] args) {
+
         Ballpen ballpen = new Ballpen("Pilot", "Black", 20.0, 1.0);
         Marker marker = new Marker("Pentel", "Red", 35.0, true);
 
-        System.out.println("=== Ballpen ===");
-        System.out.println(ballpen);
-        ballpen.write();
+        testPen(ballpen);
+        testPen(marker);
 
+        testRefillable(ballpen);
+        testRefillable(marker);
+
+        testClickable(ballpen);
+
+    }
+
+    public static void testPen(Pen pen) {
+        System.out.println(pen);
+        pen.write();
+        pen.store();
         System.out.println();
+    }
 
-        System.out.println("=== Marker ===");
-        System.out.println(marker);
-        marker.write();
-
-        Gelpen gelPen = new Gelpen("Zebra", "Blue", 18.5, 0.5, true);
-
+    public static void testRefillable(Refillable refillable) {
+        refillable.refill();
+        System.out.println("Maximum refills: " + Refillable.MAX_REFILLS);
         System.out.println();
-        System.out.println("=== GelPen (Stretch Goal) ===");
-        System.out.println(gelPen);
-        gelPen.write();
+    }
 
-        System.out.println("Point Size from Ballpen: " + gelPen.getPointSize());
-        System.out.println("Brand from Pen: " + gelPen.getBrand());
+    public static void testClickable(Clickable clickable) {
+        clickable.click();
     }
 }
+
+/*
+ * Abstract class vs Interface
+ * An abstract class (extends) is a partial parent that shares fields, constructors,
+ * and regular methods with its children, and a class can extend only one.
+ * An interface (implements) is a contract of abilities (constants and method
+ * signatures), and a class can implement many, even unrelated ones.
+ * Use extends for an "is-a" relationship, and implements for a "can-do" ability.
+ */
